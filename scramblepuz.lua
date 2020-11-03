@@ -1,3 +1,5 @@
+moonshine = require ("moonshine")
+
 ScramblePuz = {
   Spacing = 3
 }
@@ -18,7 +20,6 @@ function ScramblePuz.new (gridWidth, src, puzX, puzY)
     solved = false,
     pieceSize = pieceSize,
     pieces = {},
-    hasSelected = false,
     pieceSelected
   }, ScramblePuz)
   for row = 1, self.gridWidth do
@@ -32,6 +33,7 @@ function ScramblePuz.new (gridWidth, src, puzX, puzY)
         startY = 10,
         isPresent = true,
         type = "piece",
+        isSelected = false,
         parent = self
       }
       table.insert(globalItemTable, self.pieces[row][col])
@@ -52,16 +54,22 @@ end
 function ScramblePuz:drawPuz()
   for rownum, row in pairs(self.pieces) do
     for col, piece in pairs(self.pieces[rownum]) do
-      love.graphics.draw(self.src, piece.pquad, piece.startX, piece.startY)
+      if piece.isSelected then
+        effect.draw(function()
+          love.graphics.draw(self.src, piece.pquad, piece.startX, piece.startY)
+        end)
+      else
+        love.graphics.draw(self.src, piece.pquad, piece.startX, piece.startY)
+      end
     end
   end
 end
 
 function ScramblePuz:onClick(item, xmouse, ymouse)
   if (xmouse >= item.startX and xmouse <= item.startX + self.pieceSize) and (ymouse >= item.startY and ymouse <= item.startY + self.pieceSize) then
-    if not self.hasSelected then
+    if not self.pieceSelected then
       self.pieceSelected = item
-      self.hasSelected = true
+      item.isSelected = true
     else
       local tempXsel = self.pieceSelected.startX
       local tempYsel = self.pieceSelected.startY
@@ -71,7 +79,7 @@ function ScramblePuz:onClick(item, xmouse, ymouse)
       self.pieceSelected.startY = tempY
       item.startX = tempXsel
       item.startY = tempYsel
-      self.hasSelected = false
+      self.pieceSelected.isSelected = false
       self.pieceSelected = nil
     end
     return true
@@ -82,6 +90,10 @@ end
 function ScramblePuz:checkSolved()
   for rownum, row in pairs(self.pieces) do
     for col, piece in pairs(self.pieces[rownum]) do
+      if piece.startX ~= piece.trueX or piece.startY ~= piece.trueY then
+        return false
+      end
     end
   end
+  return true
 end
